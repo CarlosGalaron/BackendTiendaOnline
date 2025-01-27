@@ -1,5 +1,6 @@
 // src/controllers/userController.js
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 const User = require('../models/userModel');
 
 // Crear un nuevo usuario
@@ -81,10 +82,31 @@ const deleteUser = async (req, res) => {
   }
 };
 
+// Login
+const loginUser = async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+    const user = await User.findOne({ where: { email } });
+    if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) return res.status(401).json({ error: 'Contraseña incorrecta' });
+
+    // Generar token JWT
+    const token = jwt.sign({ id: user.id }, 'your_secret_key', { expiresIn: '1h' });
+
+    res.json({ message: 'Inicio de sesión exitoso', token });
+  } catch (error) {
+    res.status(500).json({ error: 'Error del servidor' });
+  }
+};
+
 module.exports = {
   createUser,
   getUsers,
   getUserById,
   updateUser,
   deleteUser,
+  loginUser,
 };
