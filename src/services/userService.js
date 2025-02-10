@@ -13,6 +13,10 @@ class UserService {
     return await User.findByPk(id);
   }
 
+  async getUserByEmail(email){
+    return await User.findOne({ where: { email } });
+  }
+
   async updateUser(id, data) {
     const user = await User.findByPk(id);
     if (!user) throw new Error('User not found');
