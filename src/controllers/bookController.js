@@ -60,7 +60,7 @@ const deleteBook = async (req, res) => {
 const searchBooks = async (req, res) => {
   try {
     const books = await bookService.searchBooks(req.query);
-    res.status(200).json(books);
+    res.status(200).json(books);  
   } catch (error) {
     res.status(500).json({ error: "Error searching books" });
   }
