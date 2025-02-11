@@ -1,3 +1,4 @@
+// server.js
 const app = require('./src/app');
 const sequelize = require('./src/config/db');
 

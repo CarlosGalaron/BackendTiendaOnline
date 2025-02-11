@@ -17,6 +17,7 @@ const getExchangeBooksByUser = async (userId) => {
       user_id: userId,
       type: { [Op.in]: ["oferta", "solicitud"] },
     },
+    order: [['id', 'DESC']], // Orden por ID descendente
   });
 };
 
