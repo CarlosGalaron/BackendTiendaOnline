@@ -1,13 +1,14 @@
-const { Sequelize, DataTypes } = require("sequelize");
+const { DataTypes } = require("sequelize");
 const sequelize = require("../config/db");
+const User = require("./userModel");
 
 const Book = sequelize.define(
-  "books",
+  "Book",
   {
     id: {
       type: DataTypes.INTEGER,
-      autoIncrement: true,
       primaryKey: true,
+      autoIncrement: true,
     },
     title: {
       type: DataTypes.STRING,
@@ -22,23 +23,38 @@ const Book = sequelize.define(
       allowNull: false,
     },
     image: {
-      type: DataTypes.STRING, // Nueva columna para almacenar la URL de la imagen
-      allowNull: true, // Puede ser null si no se carga imagen
+      type: DataTypes.STRING, // URL de la imagen
+      allowNull: true,
     },
-    createdAt: {
-      type: DataTypes.DATE,
-      allowNull: false,
-      defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
+    book_state: {
+      type: DataTypes.STRING, // Solo para intercambio
+      allowNull: true,
     },
-    updatedAt: {
-      type: DataTypes.DATE,
+    ISBN: {
+      type: DataTypes.STRING, // Solo para intercambio
+      allowNull: true,
+    },
+    type: {
+      type: DataTypes.ENUM("catalogo", "oferta", "solicitud"),
       allowNull: false,
-      defaultValue: DataTypes.NOW,
+    },
+    user_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true, // Solo necesario en intercambio
+      references: {
+        model: User,
+        key: "id",
+      },
     },
   },
   {
+    tableName: "books",
     timestamps: true,
   }
 );
+
+// Relación solo si es intercambio
+Book.belongsTo(User, { foreignKey: "user_id", onDelete: "CASCADE" });
+User.hasMany(Book, { foreignKey: "user_id" });
 
 module.exports = Book;

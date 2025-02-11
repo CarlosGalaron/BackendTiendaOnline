@@ -1,24 +1,30 @@
+//bookRoutes
 const express = require("express");
-const multer = require("multer");
-const path = require("path");
-const { createBook, getAllBooks } = require("../controllers/bookController");
-
 const router = express.Router();
+const bookController = require("../controllers/bookController");
 
-// Configurar multer para subir archivos a la carpeta public/images
-const storage = multer.diskStorage({
-  destination: "public/images",
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname)); // Guardar con nombre único
-  },
-});
+// Obtener todos los libros del catálogo
+router.get("/catalog", bookController.getCatalogBooks);
 
-const upload = multer({ storage });
+// Obtener los libros de intercambio de un usuario específico
+router.get("/exchange/:userId", bookController.getUserExchangeBooks);
 
-// Ruta para crear un libro con imagen (POST)
-router.post("/books", upload.single("image"), createBook);
+// Registrar un libro en el catálogo
+router.post("/catalog", bookController.createCatalogBook);
 
-// Ruta para obtener todos los libros (GET)
-router.get("/books", getAllBooks);
+// Registrar un libro para intercambio (oferta o solicitud)
+router.post("/exchange", bookController.createExchangeBook);
+
+// Editar un libro del catálogo
+router.put("/catalog/:id", bookController.editCatalogBook);
+
+// Editar un libro de intercambio
+router.put("/exchange/:id", bookController.editExchangeBook);
+
+// Eliminar un libro por ID
+router.delete("/:id", bookController.deleteBook);
+
+// Buscar libros por título o autor
+router.get("/search", bookController.searchBooks);
 
 module.exports = router;
