@@ -20,7 +20,7 @@ const Book = sequelize.define(
     },
     genre: {
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull: true,
     },
     image: {
       type: DataTypes.STRING, // URL de la imagen
