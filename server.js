@@ -1,4 +1,5 @@
 //server.js
+//esto es una prueba
 const express = require("express");
 const cors = require("cors");
 const sequelize = require("./src/config/db");
