@@ -8,10 +8,10 @@ const getCatalogBooks = async (req, res) => {
     const books = await bookService.getAllCatalogBooks();
     res.json(books);
   } catch (error) {
-    res
-      .status(500)
-      .json({ error: "Error al obtener los libros del catálogo." });
+  
+    res.status(500).json({ error: "Error al obtener los libros del catálogo." });
   }
+  
 };
 
 /**
@@ -23,6 +23,7 @@ const getUserExchangeBooks = async (req, res) => {
     const books = await bookService.getExchangeBooksByUser(userId);
     res.json(books);
   } catch (error) {
+
     res
       .status(500)
       .json({
@@ -37,6 +38,7 @@ const getUserExchangeBooks = async (req, res) => {
 const createCatalogBook = async (req, res) => {
   try {
     const { user_id, title, author, book_state, ISBN } = req.body;
+
     const newBook = await bookService.createCatalogBook({
       user_id,
       title,
@@ -58,6 +60,7 @@ const createCatalogBook = async (req, res) => {
 const createExchangeBook = async (req, res) => {
   try {
     const { user_id, type, title, author, book_state } = req.body;
+
     const newBook = await bookService.createExchangeBook({
       user_id,
       type,
@@ -82,6 +85,7 @@ const editCatalogBook = async (req, res) => {
   try {
     const { id } = req.params;
     const { title, author, book_state, ISBN } = req.body;
+
     const updated = await bookService.updateCatalogBook(id, {
       title,
       author,
@@ -97,6 +101,7 @@ const editCatalogBook = async (req, res) => {
 
     res.json({ message: "Libro actualizado correctamente." });
   } catch (error) {
+
     res
       .status(500)
       .json({ error: "Error al actualizar el libro del catálogo." });
@@ -110,6 +115,7 @@ const editExchangeBook = async (req, res) => {
   try {
     const { id } = req.params;
     const { title, author, book_state } = req.body;
+
     const updated = await bookService.updateExchangeBook(id, {
       title,
       author,
@@ -124,6 +130,7 @@ const editExchangeBook = async (req, res) => {
 
     res.json({ message: "Libro actualizado correctamente." });
   } catch (error) {
+
     res
       .status(500)
       .json({ error: "Error al actualizar el libro de intercambio." });

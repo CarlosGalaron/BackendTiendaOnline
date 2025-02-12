@@ -69,12 +69,20 @@ const loginUser = async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(401).json({ error: 'Contraseña incorrecta' });
 
+    // Generar token con el id del usuario
     const token = jwt.sign({ id: user.id }, 'your_secret_key', { expiresIn: '1h' });
-    res.json({ message: 'Inicio de sesión exitoso', token });
+
+    // Enviar también el id y los datos del usuario para tablas que dependes de usuario
+    res.json({
+      message: 'Inicio de sesión exitoso',
+      token,
+      user: { id: user.id, name: user.name, email: user.email }
+    });
   } catch (error) {
     res.status(500).json({ error: 'Error del servidor' });
   }
 };
+
 
 module.exports = {
   createUser,

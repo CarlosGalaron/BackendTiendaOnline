@@ -13,6 +13,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.use("/api", userRoutes);
+app.use('/api/users', userRoutes); // Rutas de usuarios
+app.use('/api/books', bookRoutes); // Rutas de libros
 
 module.exports = app;

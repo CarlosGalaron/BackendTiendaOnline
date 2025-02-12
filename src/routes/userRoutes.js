@@ -10,15 +10,15 @@ const {
 
 const router = express.Router();
 
-router.post("/register", createUser);
-router.get("/", getUsers);
-router.get("/:id", getUserById);
-router.put("/:id", updateUser);
-router.delete("/:id", deleteUser);
+router.post('/register', createUser);
+router.get('/', getUsers);
+router.get('/:id', getUserById);
+router.put('/:id', updateUser);
+router.delete('/:id', deleteUser);
 
 // Login
-const { loginUser } = require("../controllers/userController");
-router.post("/login", loginUser);
+const { loginUser } = require('../controllers/userController');
+router.post('/login', loginUser);
 
 //rutas protegidas
 const authenticateToken = require("../middlewares/authMiddleware");

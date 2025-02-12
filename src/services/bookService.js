@@ -17,19 +17,16 @@ const getExchangeBooksByUser = async (userId) => {
       user_id: userId,
       type: { [Op.in]: ["oferta", "solicitud"] },
     },
+
+    order: [['id', 'DESC']], // Orden por ID descendente
   });
 };
 
 /**
  * Crear un libro en catálogo
  */
-const createCatalogBook = async ({
-  user_id,
-  title,
-  author,
-  book_state,
-  ISBN,
-}) => {
+const createCatalogBook = async ({ user_id, title, author, book_state, ISBN }) => {
+
   return await Book.create({
     user_id,
     type: "catalogo",
@@ -43,6 +40,7 @@ const createCatalogBook = async ({
 /**
  * Crear un libro en intercambio (oferta o solicitud)
  */
+
 const createExchangeBook = async ({
   user_id,
   type,
