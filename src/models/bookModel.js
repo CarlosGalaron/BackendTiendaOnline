@@ -51,7 +51,7 @@ const Book = sequelize.define(
   },
   {
     tableName: "books",
-    timestamps: true,
+    timestamps: false,
   }
 );
 
