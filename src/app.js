@@ -1,9 +1,12 @@
-// app.js
+// src/app.js
+const express = require("express");
+const cors = require("cors");
+const userRoutes = require("./routes/userRoutes");
+const bookRoutes = require("./routes/bookRoutes");
 
-const express = require('express');
-const cors = require('cors');
-const userRoutes = require('./routes/userRoutes'); // Importamos userRoutes
-const bookRoutes = require('./routes/bookRoutes'); // Importamos bookRoutes
+// Rutas de la API
+app.use("/api/users", userRoutes);
+app.use("/api/books", bookRoutes);
 
 const app = express();
 

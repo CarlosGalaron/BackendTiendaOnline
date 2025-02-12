@@ -17,6 +17,7 @@ const getExchangeBooksByUser = async (userId) => {
       user_id: userId,
       type: { [Op.in]: ["oferta", "solicitud"] },
     },
+
     order: [['id', 'DESC']], // Orden por ID descendente
   });
 };
@@ -25,6 +26,7 @@ const getExchangeBooksByUser = async (userId) => {
  * Crear un libro en catálogo
  */
 const createCatalogBook = async ({ user_id, title, author, book_state, ISBN }) => {
+
   return await Book.create({
     user_id,
     type: "catalogo",
@@ -38,7 +40,14 @@ const createCatalogBook = async ({ user_id, title, author, book_state, ISBN }) =
 /**
  * Crear un libro en intercambio (oferta o solicitud)
  */
-const createExchangeBook = async ({ user_id, type, title, author, book_state }) => {
+
+const createExchangeBook = async ({
+  user_id,
+  type,
+  title,
+  author,
+  book_state,
+}) => {
   if (!["oferta", "solicitud"].includes(type)) {
     throw new Error("El tipo debe ser 'oferta' o 'solicitud'.");
   }

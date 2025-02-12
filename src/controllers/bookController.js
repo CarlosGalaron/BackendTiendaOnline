@@ -8,8 +8,10 @@ const getCatalogBooks = async (req, res) => {
     const books = await bookService.getAllCatalogBooks();
     res.json(books);
   } catch (error) {
+  
     res.status(500).json({ error: "Error al obtener los libros del catálogo." });
   }
+  
 };
 
 /**
@@ -21,7 +23,12 @@ const getUserExchangeBooks = async (req, res) => {
     const books = await bookService.getExchangeBooksByUser(userId);
     res.json(books);
   } catch (error) {
-    res.status(500).json({ error: "Error al obtener los libros de intercambio del usuario." });
+
+    res
+      .status(500)
+      .json({
+        error: "Error al obtener los libros de intercambio del usuario.",
+      });
   }
 };
 
@@ -31,10 +38,19 @@ const getUserExchangeBooks = async (req, res) => {
 const createCatalogBook = async (req, res) => {
   try {
     const { user_id, title, author, book_state, ISBN } = req.body;
-    const newBook = await bookService.createCatalogBook({ user_id, title, author, book_state, ISBN });
+
+    const newBook = await bookService.createCatalogBook({
+      user_id,
+      title,
+      author,
+      book_state,
+      ISBN,
+    });
     res.status(201).json(newBook);
   } catch (error) {
-    res.status(500).json({ error: "Error al registrar el libro en el catálogo." });
+    res
+      .status(500)
+      .json({ error: "Error al registrar el libro en el catálogo." });
   }
 };
 
@@ -44,10 +60,21 @@ const createCatalogBook = async (req, res) => {
 const createExchangeBook = async (req, res) => {
   try {
     const { user_id, type, title, author, book_state } = req.body;
-    const newBook = await bookService.createExchangeBook({ user_id, type, title, author, book_state });
+
+    const newBook = await bookService.createExchangeBook({
+      user_id,
+      type,
+      title,
+      author,
+      book_state,
+    });
     res.status(201).json(newBook);
   } catch (error) {
-    res.status(400).json({ error: error.message || "Error al registrar el libro para intercambio." });
+    res
+      .status(400)
+      .json({
+        error: error.message || "Error al registrar el libro para intercambio.",
+      });
   }
 };
 
@@ -58,15 +85,26 @@ const editCatalogBook = async (req, res) => {
   try {
     const { id } = req.params;
     const { title, author, book_state, ISBN } = req.body;
-    const updated = await bookService.updateCatalogBook(id, { title, author, book_state, ISBN });
+
+    const updated = await bookService.updateCatalogBook(id, {
+      title,
+      author,
+      book_state,
+      ISBN,
+    });
 
     if (updated[0] === 0) {
-      return res.status(404).json({ error: "Libro no encontrado o sin cambios aplicados." });
+      return res
+        .status(404)
+        .json({ error: "Libro no encontrado o sin cambios aplicados." });
     }
 
     res.json({ message: "Libro actualizado correctamente." });
   } catch (error) {
-    res.status(500).json({ error: "Error al actualizar el libro del catálogo." });
+
+    res
+      .status(500)
+      .json({ error: "Error al actualizar el libro del catálogo." });
   }
 };
 
@@ -77,15 +115,25 @@ const editExchangeBook = async (req, res) => {
   try {
     const { id } = req.params;
     const { title, author, book_state } = req.body;
-    const updated = await bookService.updateExchangeBook(id, { title, author, book_state });
+
+    const updated = await bookService.updateExchangeBook(id, {
+      title,
+      author,
+      book_state,
+    });
 
     if (updated[0] === 0) {
-      return res.status(404).json({ error: "Libro no encontrado o sin cambios aplicados." });
+      return res
+        .status(404)
+        .json({ error: "Libro no encontrado o sin cambios aplicados." });
     }
 
     res.json({ message: "Libro actualizado correctamente." });
   } catch (error) {
-    res.status(500).json({ error: "Error al actualizar el libro de intercambio." });
+
+    res
+      .status(500)
+      .json({ error: "Error al actualizar el libro de intercambio." });
   }
 };
 
