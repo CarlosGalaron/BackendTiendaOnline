@@ -1,4 +1,6 @@
+//bookController.js
 const bookService = require("../services/bookService");
+
 
 /**
  * Obtener todos los libros de tipo "catalogo"
@@ -8,10 +10,10 @@ const getCatalogBooks = async (req, res) => {
     const books = await bookService.getAllCatalogBooks();
     res.json(books);
   } catch (error) {
-  
+
     res.status(500).json({ error: "Error al obtener los libros del catálogo." });
   }
-  
+
 };
 
 /**
@@ -59,22 +61,38 @@ const createCatalogBook = async (req, res) => {
  */
 const createExchangeBook = async (req, res) => {
   try {
-    const { user_id, type, title, author, book_state } = req.body;
+    const { user_id, title, author, book_state, type } = req.body;
 
-    const newBook = await bookService.createExchangeBook({
-      user_id,
-      type,
-      title,
-      author,
-      book_state,
-    });
-    res.status(201).json(newBook);
+    if (!user_id || !title || !author || !book_state || !type) {
+      return res.status(400).json({ error: "Todos los campos son obligatorios" });
+    }
+
+    console.log("📌 Recibida nueva solicitud de intercambio:", req.body);
+
+    // Registrar el libro
+    const newBook = await bookService.createExchangeBook({ user_id, title, author, book_state, type });
+
+    if (!newBook) {
+      return res.status(500).json({ error: "Error al registrar el libro" });
+    }
+
+    console.log("✅ Libro registrado con éxito:", newBook);
+
+    // Buscar y registrar un match si existe
+    const match = await checkAndCreateMatch(newBook.book);
+
+
+    if (match) {
+      console.log("🎉 ¡Match creado!", match);
+    } else {
+      console.log("⚠️ No se encontró match en este momento.");
+    }
+
+    res.status(201).json({ message: "Libro registrado", book: newBook, match });
+
   } catch (error) {
-    res
-      .status(400)
-      .json({
-        error: error.message || "Error al registrar el libro para intercambio.",
-      });
+    console.error("❌ Error en createExchangeBook:", error.message);
+    res.status(500).json({ error: "Error interno del servidor" });
   }
 };
 
