@@ -18,7 +18,7 @@ const getExchangeBooksByUser = async (userId) => {
       user_id: userId,
       type: { [Op.in]: ["oferta", "solicitud"] },
     },
-    order: [["id", "DESC"]], // Orden por ID descendente
+    order: [["id", "DESC"]],
   });
 };
 
@@ -46,7 +46,7 @@ const createExchangeBook = async ({ user_id, type, title, author, book_state }) 
 
   const book = await Book.create({ user_id, type, title, author, book_state });
 
-  // Comprobar y registrar un match si existe
+  // Verificar y registrar un match si es posible
   const match = await checkAndCreateMatch(book);
 
   return { book, match };
@@ -58,8 +58,6 @@ const createExchangeBook = async ({ user_id, type, title, author, book_state }) 
  */
 async function checkAndCreateMatch(newBook) {
   const { id, user_id, title, author, type } = newBook;
-
-  // Determinar el tipo opuesto (si es 'oferta' busca 'solicitud' y viceversa)
   const oppositeType = type === "oferta" ? "solicitud" : "oferta";
 
   const query = `
@@ -76,20 +74,19 @@ async function checkAndCreateMatch(newBook) {
         AND b1.type = '${type}' 
         AND b2.type = '${oppositeType}'
         AND b1.user_id != b2.user_id
-    WHERE b1.id = ${id} OR b2.id = ${id}
-    RETURNING id, id_user1, id_user2;
+    WHERE b1.id = ${id} OR b2.id = ${id};
   `;
 
   try {
-    const [result] = await sequelize.query(query, { type: sequelize.QueryTypes.INSERT });
+    await sequelize.query(query, { type: sequelize.QueryTypes.INSERT });
 
-    if (result.length > 0) {
-      return {
-        matchId: result[0].id,
-        matchedUserId: result[0].id_user2, // ID del usuario con quien se hizo match
-      };
-    }
-    return null;
+    // Buscar el match recién insertado
+    const [result] = await sequelize.query(
+      `SELECT * FROM matches WHERE book1_id = ${id} OR book2_id = ${id} LIMIT 1;`,
+      { type: sequelize.QueryTypes.SELECT }
+    );
+
+    return result || null;
   } catch (error) {
     console.error("Error creando match:", error);
     return null;
@@ -143,4 +140,5 @@ module.exports = {
   updateExchangeBook,
   deleteBook,
   searchBooks,
+  checkAndCreateMatch,
 };
