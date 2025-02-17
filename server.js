@@ -14,7 +14,8 @@ app.use("/images", express.static("/public/images"));
 const PORT = process.env.PORT || 4000;
 
 sequelize
-  .sync({ alter: true })
+  .sync()
+  //.sync({ alter: true }) esto crea multiples instancias de la tabla. Mejor usar migraciones
   .then(() => {
     app.listen(PORT, () => {
       console.log(`Server is running on port ${PORT}`);

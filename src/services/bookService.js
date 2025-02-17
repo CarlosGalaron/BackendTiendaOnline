@@ -1,5 +1,6 @@
 const Book = require("../models/bookModel");
 const { Op } = require("sequelize");
+const sequelize = require("../config/db");
 
 /**
  * Obtener todos los libros de tipo "catalogo"
@@ -9,7 +10,7 @@ const getAllCatalogBooks = async () => {
 };
 
 /**
- * Obtener todos los libros de un usuario cuando sean "oferta" o "solicitud"
+ * Obtener los libros de intercambio (ofertas y solicitudes) de un usuario
  */
 const getExchangeBooksByUser = async (userId) => {
   return await Book.findAll({
@@ -17,8 +18,7 @@ const getExchangeBooksByUser = async (userId) => {
       user_id: userId,
       type: { [Op.in]: ["oferta", "solicitud"] },
     },
-
-    order: [['id', 'DESC']], // Orden por ID descendente
+    order: [["id", "DESC"]], // Orden por ID descendente
   });
 };
 
@@ -26,7 +26,6 @@ const getExchangeBooksByUser = async (userId) => {
  * Crear un libro en catálogo
  */
 const createCatalogBook = async ({ user_id, title, author, book_state, ISBN }) => {
-
   return await Book.create({
     user_id,
     type: "catalogo",
@@ -38,27 +37,64 @@ const createCatalogBook = async ({ user_id, title, author, book_state, ISBN }) =
 };
 
 /**
- * Crear un libro en intercambio (oferta o solicitud)
+ * Crear un libro en intercambio (oferta o solicitud) y verificar matches
  */
-
-const createExchangeBook = async ({
-  user_id,
-  type,
-  title,
-  author,
-  book_state,
-}) => {
+const createExchangeBook = async ({ user_id, type, title, author, book_state }) => {
   if (!["oferta", "solicitud"].includes(type)) {
     throw new Error("El tipo debe ser 'oferta' o 'solicitud'.");
   }
-  return await Book.create({
-    user_id,
-    type,
-    title,
-    author,
-    book_state,
-  });
+
+  const book = await Book.create({ user_id, type, title, author, book_state });
+
+  // Comprobar y registrar un match si existe
+  const match = await checkAndCreateMatch(book);
+
+  return { book, match };
 };
+
+/**
+ * Comprueba si existen coincidencias entre ofertas y solicitudes de intercambio.
+ * Si hay un match doble entre dos usuarios, lo registra en la tabla 'matches'.
+ */
+async function checkAndCreateMatch(newBook) {
+  const { id, user_id, title, author, type } = newBook;
+
+  // Determinar el tipo opuesto (si es 'oferta' busca 'solicitud' y viceversa)
+  const oppositeType = type === "oferta" ? "solicitud" : "oferta";
+
+  const query = `
+    INSERT INTO matches (id_user1, id_user2, book1_id, book2_id)
+    SELECT 
+        b1.user_id AS id_user1,
+        b2.user_id AS id_user2,
+        b1.id AS book1_id,
+        b2.id AS book2_id
+    FROM books b1
+    JOIN books b2 ON 
+        b1.title = b2.title 
+        AND b1.author = b2.author 
+        AND b1.type = '${type}' 
+        AND b2.type = '${oppositeType}'
+        AND b1.user_id != b2.user_id
+    WHERE b1.id = ${id} OR b2.id = ${id}
+    RETURNING id, id_user1, id_user2;
+  `;
+
+  try {
+    const [result] = await sequelize.query(query, { type: sequelize.QueryTypes.INSERT });
+
+    if (result.length > 0) {
+      return {
+        matchId: result[0].id,
+        matchedUserId: result[0].id_user2, // ID del usuario con quien se hizo match
+      };
+    }
+    return null;
+  } catch (error) {
+    console.error("Error creando match:", error);
+    return null;
+  }
+}
 
 /**
  * Editar un libro en catálogo
