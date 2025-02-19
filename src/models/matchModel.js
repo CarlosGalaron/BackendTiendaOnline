@@ -1,4 +1,3 @@
-// matchModel.js
 const { DataTypes } = require("sequelize");
 const sequelize = require("../config/db");
 
@@ -8,28 +7,33 @@ const Match = sequelize.define(
     id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
-      autoIncrement: true, // Se incrementa automáticamente en la base de datos
+      autoIncrement: true,
     },
     id_user1: {
       type: DataTypes.INTEGER,
-      allowNull: false, // Usuario 1 involucrado en el intercambio
+      allowNull: false,
     },
     id_user2: {
       type: DataTypes.INTEGER,
-      allowNull: false, // Usuario 2 involucrado en el intercambio
+      allowNull: false,
     },
     book1_id: {
       type: DataTypes.INTEGER,
-      allowNull: false, // Libro ofrecido por el usuario 1
+      allowNull: false,
     },
     book2_id: {
       type: DataTypes.INTEGER,
-      allowNull: false, // Libro ofrecido por el usuario 2
+      allowNull: false,
+    },
+    match_state: {
+      type: DataTypes.BOOLEAN,
+      allowNull: true, // Permite null para representar "pendiente"
+      defaultValue: null, // Estado por defecto: pendiente
     },
   },
   {
     tableName: "matches",
-    timestamps: false, // No guardamos automáticamente createdAt ni updatedAt
+    timestamps: false,
   }
 );
 

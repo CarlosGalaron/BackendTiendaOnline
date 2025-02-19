@@ -1,4 +1,5 @@
 const Book = require("../models/bookModel");
+const Match = require("../models/matchModel");
 const { Op } = require("sequelize");
 const sequelize = require("../config/db");
 
@@ -131,6 +132,56 @@ const searchBooks = async ({ title, author }) => {
   return await Book.findAll({ where: filters });
 };
 
+/**
+ * Obtener los matches de un usuario
+ */
+const getUserMatches = async (userId) => {
+  const matches = await Match.findAll({
+    where: {
+      [Op.or]: [{ id_user1: userId }, { id_user2: userId }],
+    },
+    attributes: ["id", "id_user1", "id_user2", "book1_id", "book2_id", "match_state"],
+  });
+
+  console.log("📄 Matches encontrados en la BD:", matches); // ✅ Ahora sí se imprime
+
+  return matches; // ✅ Ahora sí devuelve los resultados correctamente
+};
+
+/**
+ * Actualizar el estado de un match (aceptado/rechazado)
+ */
+const updateMatchState = async (matchId, userId, match_state) => {
+  const match = await Match.findByPk(matchId);
+  if (!match) throw new Error("Match no encontrado.");
+
+  // Verificar que el usuario es parte del match
+  if (match.id_user1 !== userId && match.id_user2 !== userId) {
+    return null; // No tiene permisos
+  }
+
+  match.match_state = match_state;
+  await match.save();
+
+  return match;
+};
+
+/**
+ * Eliminar un match (si se rechaza)
+ */
+const deleteMatch = async (matchId, userId) => {
+  const match = await Match.findByPk(matchId);
+  if (!match) return null;
+
+  // Solo los involucrados pueden eliminar el match
+  if (match.id_user1 !== userId && match.id_user2 !== userId) {
+    return null;
+  }
+
+  await match.destroy();
+  return true;
+};
+
 module.exports = {
   getAllCatalogBooks,
   getExchangeBooksByUser,
@@ -141,4 +192,7 @@ module.exports = {
   deleteBook,
   searchBooks,
   checkAndCreateMatch,
+  getUserMatches,
+  updateMatchState,
+  deleteMatch,
 };
