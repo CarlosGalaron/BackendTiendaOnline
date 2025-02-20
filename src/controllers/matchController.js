@@ -1,15 +1,11 @@
 const bookService = require("../services/bookService");
 
 /**
- * Obtener los matches del usuario logeado
+ * Obtener los matches del usuario logueado
  */
 const getUserMatches = async (req, res) => {
   try {
-    const { userId } = req.params; // El userId ahora viene del cliente
-    if (!userId) {
-      return res.status(400).json({ error: "Se requiere userId" });
-    }
-
+    const { userId } = req.params;
     const matches = await bookService.getUserMatches(userId);
     res.json(matches);
   } catch (error) {
@@ -23,7 +19,7 @@ const getUserMatches = async (req, res) => {
 const updateMatchState = async (req, res) => {
   try {
     const { matchId } = req.params;
-    const { userId, match_state } = req.body; // userId viene en el body
+    const { userId, match_state } = req.body;
 
     if (!userId) {
       return res.status(400).json({ error: "Se requiere userId" });
@@ -37,6 +33,7 @@ const updateMatchState = async (req, res) => {
     if (!updatedMatch) {
       return res.status(403).json({ error: "No tienes permiso para modificar este match" });
     }
+
     res.json(updatedMatch);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -49,7 +46,7 @@ const updateMatchState = async (req, res) => {
 const deleteMatch = async (req, res) => {
   try {
     const { matchId } = req.params;
-    const { userId } = req.body; // userId viene en el body
+    const { userId } = req.body;
 
     if (!userId) {
       return res.status(400).json({ error: "Se requiere userId" });

@@ -1,5 +1,6 @@
 const Book = require("../models/bookModel");
 const Match = require("../models/matchModel");
+const User = require("../models/userModel");
 const { Op } = require("sequelize");
 const sequelize = require("../config/db");
 
@@ -95,44 +96,6 @@ async function checkAndCreateMatch(newBook) {
 }
 
 /**
- * Editar un libro en catálogo
- */
-const updateCatalogBook = async (id, { title, author, book_state, ISBN }) => {
-  return await Book.update(
-    { title, author, book_state, ISBN },
-    { where: { id, type: "catalogo" } }
-  );
-};
-
-/**
- * Editar un libro en intercambio (solo si es oferta o solicitud)
- */
-const updateExchangeBook = async (id, { title, author, book_state }) => {
-  return await Book.update(
-    { title, author, book_state },
-    { where: { id, type: { [Op.in]: ["oferta", "solicitud"] } } }
-  );
-};
-
-/**
- * Eliminar un libro por ID
- */
-const deleteBook = async (id) => {
-  return await Book.destroy({ where: { id } });
-};
-
-/**
- * Buscar libros con filtros (título, autor)
- */
-const searchBooks = async ({ title, author }) => {
-  const filters = {};
-  if (title) filters.title = { [Op.iLike]: `%${title}%` };
-  if (author) filters.author = { [Op.iLike]: `%${author}%` };
-
-  return await Book.findAll({ where: filters });
-};
-
-/**
  * Obtener los matches de un usuario
  */
 const getUserMatches = async (userId) => {
@@ -141,43 +104,30 @@ const getUserMatches = async (userId) => {
       where: {
         [Op.or]: [{ id_user1: userId }, { id_user2: userId }],
       },
-      attributes: ["id", "id_user1", "id_user2", "match_state"], // No incluimos los book_id, ya los tenemos en 'include'
+      attributes: ["id", "id_user1", "id_user2", "match_state"],
       include: [
         {
           model: Book,
           as: "book1",
           attributes: ["id", "title", "author", "genre", "book_state", "type", "user_id"],
-          include: [
-            {
-              model: User,
-              attributes: ["id", "name"], // Obtener el nombre del usuario dueño del libro 1
-            },
-          ],
+          include: [{ model: User, attributes: ["id", "name"] }],
         },
         {
           model: Book,
           as: "book2",
           attributes: ["id", "title", "author", "genre", "book_state", "type", "user_id"],
-          include: [
-            {
-              model: User,
-              attributes: ["id", "name"], // Obtener el nombre del usuario dueño del libro 2
-            },
-          ],
+          include: [{ model: User, attributes: ["id", "name"] }],
         },
       ],
     });
 
-    console.log("📄 Matches encontrados en la BD con libros y usuarios:", JSON.stringify(matches, null, 2));
+    console.log("📄 Matches encontrados:", JSON.stringify(matches, null, 2));
     return matches;
   } catch (error) {
     console.error("❌ Error al obtener los matches:", error);
     throw error;
   }
 };
-
-module.exports = { getUserMatches };
-
 
 /**
  * Actualizar el estado de un match (aceptado/rechazado)
@@ -186,9 +136,8 @@ const updateMatchState = async (matchId, userId, match_state) => {
   const match = await Match.findByPk(matchId);
   if (!match) throw new Error("Match no encontrado.");
 
-  // Verificar que el usuario es parte del match
   if (match.id_user1 !== userId && match.id_user2 !== userId) {
-    return null; // No tiene permisos
+    return null;
   }
 
   match.match_state = match_state;
@@ -204,7 +153,6 @@ const deleteMatch = async (matchId, userId) => {
   const match = await Match.findByPk(matchId);
   if (!match) return null;
 
-  // Solo los involucrados pueden eliminar el match
   if (match.id_user1 !== userId && match.id_user2 !== userId) {
     return null;
   }
@@ -218,10 +166,6 @@ module.exports = {
   getExchangeBooksByUser,
   createCatalogBook,
   createExchangeBook,
-  updateCatalogBook,
-  updateExchangeBook,
-  deleteBook,
-  searchBooks,
   checkAndCreateMatch,
   getUserMatches,
   updateMatchState,
