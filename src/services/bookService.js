@@ -136,17 +136,48 @@ const searchBooks = async ({ title, author }) => {
  * Obtener los matches de un usuario
  */
 const getUserMatches = async (userId) => {
-  const matches = await Match.findAll({
-    where: {
-      [Op.or]: [{ id_user1: userId }, { id_user2: userId }],
-    },
-    attributes: ["id", "id_user1", "id_user2", "book1_id", "book2_id", "match_state"],
-  });
+  try {
+    const matches = await Match.findAll({
+      where: {
+        [Op.or]: [{ id_user1: userId }, { id_user2: userId }],
+      },
+      attributes: ["id", "id_user1", "id_user2", "match_state"], // No incluimos los book_id, ya los tenemos en 'include'
+      include: [
+        {
+          model: Book,
+          as: "book1",
+          attributes: ["id", "title", "author", "genre", "book_state", "type", "user_id"],
+          include: [
+            {
+              model: User,
+              attributes: ["id", "name"], // Obtener el nombre del usuario dueño del libro 1
+            },
+          ],
+        },
+        {
+          model: Book,
+          as: "book2",
+          attributes: ["id", "title", "author", "genre", "book_state", "type", "user_id"],
+          include: [
+            {
+              model: User,
+              attributes: ["id", "name"], // Obtener el nombre del usuario dueño del libro 2
+            },
+          ],
+        },
+      ],
+    });
 
-  console.log("📄 Matches encontrados en la BD:", matches); // ✅ Ahora sí se imprime
-
-  return matches; // ✅ Ahora sí devuelve los resultados correctamente
+    console.log("📄 Matches encontrados en la BD con libros y usuarios:", JSON.stringify(matches, null, 2));
+    return matches;
+  } catch (error) {
+    console.error("❌ Error al obtener los matches:", error);
+    throw error;
+  }
 };
+
+module.exports = { getUserMatches };
+
 
 /**
  * Actualizar el estado de un match (aceptado/rechazado)

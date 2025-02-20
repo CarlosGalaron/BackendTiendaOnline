@@ -69,18 +69,16 @@ const createExchangeBook = async (req, res) => {
 
     console.log("📌 Recibida nueva solicitud de intercambio:", req.body);
 
-    // Registrar el libro
-    const newBook = await bookService.createExchangeBook({ user_id, title, author, book_state, type });
+    // Registrar el libro y verificar si hay match
+    const { book, match } = await bookService.createExchangeBook({
+      user_id,
+      title,
+      author,
+      book_state,
+      type,
+    });
 
-    if (!newBook) {
-      return res.status(500).json({ error: "Error al registrar el libro" });
-    }
-
-    console.log("✅ Libro registrado con éxito:", newBook);
-
-    // Buscar y registrar un match si existe
-    const match = await checkAndCreateMatch(newBook.book);
-
+    console.log("✅ Libro registrado con éxito:", book);
 
     if (match) {
       console.log("🎉 ¡Match creado!", match);
@@ -88,7 +86,7 @@ const createExchangeBook = async (req, res) => {
       console.log("⚠️ No se encontró match en este momento.");
     }
 
-    res.status(201).json({ message: "Libro registrado", book: newBook, match });
+    res.status(201).json({ message: "Libro registrado", book, match });
 
   } catch (error) {
     console.error("❌ Error en createExchangeBook:", error.message);

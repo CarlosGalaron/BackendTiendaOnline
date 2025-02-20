@@ -27,8 +27,8 @@ const Match = sequelize.define(
     },
     match_state: {
       type: DataTypes.BOOLEAN,
-      allowNull: true, // Permite null para representar "pendiente"
-      defaultValue: null, // Estado por defecto: pendiente
+      allowNull: true,
+      defaultValue: null,
     },
   },
   {
@@ -37,4 +37,4 @@ const Match = sequelize.define(
   }
 );
 
-module.exports = Match;
+module.exports = Match; // Exportar sin definir relaciones aún
