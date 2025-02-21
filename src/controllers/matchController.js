@@ -5,10 +5,10 @@ const bookService = require("../services/bookService");
  */
 const getUserMatches = async (req, res) => {
   try {
-    const { userId } = req.params;
-    const matches = await bookService.getUserMatches(userId);
+    const matches = await bookService.getUserMatches(req); // 👈 Pasa req completo
     res.json(matches);
   } catch (error) {
+    console.error("Error en getUserMatches:", error);
     res.status(500).json({ error: error.message });
   }
 };

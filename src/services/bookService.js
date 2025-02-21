@@ -62,72 +62,90 @@ async function checkAndCreateMatch(newBook) {
   const { id, user_id, title, author, type } = newBook;
   const oppositeType = type === "oferta" ? "solicitud" : "oferta";
 
-  const query = `
-    INSERT INTO matches (id_user1, id_user2, book1_id, book2_id)
-    SELECT 
-        b1.user_id AS id_user1,
-        b2.user_id AS id_user2,
-        b1.id AS book1_id,
-        b2.id AS book2_id
-    FROM books b1
-    JOIN books b2 ON 
+  // Buscar si ya existe un match recíproco
+  const existingMatch = await sequelize.query(
+    `SELECT * FROM matches 
+     WHERE (book1_id = ${id} OR book2_id = ${id})`,
+    { type: sequelize.QueryTypes.SELECT }
+  );
+
+  if (existingMatch.length > 0) {
+    return null; // Ya hay un match, no lo duplicamos
+  }
+
+  // Buscar coincidencias de oferta y solicitud
+  const reciprocalMatch = await sequelize.query(
+    `SELECT b1.user_id AS id_user1, b2.user_id AS id_user2, 
+            b1.id AS book1_id, b2.id AS book2_id
+     FROM books b1
+     JOIN books b2 ON 
         b1.title = b2.title 
         AND b1.author = b2.author 
         AND b1.type = '${type}' 
         AND b2.type = '${oppositeType}'
         AND b1.user_id != b2.user_id
-    WHERE b1.id = ${id} OR b2.id = ${id};
-  `;
+     WHERE (b1.id = ${id} OR b2.id = ${id})
+     LIMIT 1;`,
+    { type: sequelize.QueryTypes.SELECT }
+  );
 
-  try {
-    await sequelize.query(query, { type: sequelize.QueryTypes.INSERT });
-
-    // Buscar el match recién insertado
-    const [result] = await sequelize.query(
-      `SELECT * FROM matches WHERE book1_id = ${id} OR book2_id = ${id} LIMIT 1;`,
-      { type: sequelize.QueryTypes.SELECT }
-    );
-
-    return result || null;
-  } catch (error) {
-    console.error("Error creando match:", error);
-    return null;
+  if (reciprocalMatch.length === 0) {
+    return null; // No hay match recíproco
   }
+
+  const match = reciprocalMatch[0];
+
+  // Crear el match único con la reciprocidad completa
+  await sequelize.query(
+    `INSERT INTO matches (id_user1, id_user2, book1_id, book2_id) 
+     VALUES (${match.id_user1}, ${match.id_user2}, ${match.book1_id}, ${match.book2_id})`,
+    { type: sequelize.QueryTypes.INSERT }
+  );
+
+  // Devolver el match recién creado
+  return await Match.findOne({
+    where: { book1_id: match.book1_id, book2_id: match.book2_id }
+  });
 }
 
 /**
- * Obtener los matches de un usuario
+ * Obtener los matches de un usuario de forma recipr
  */
-const getUserMatches = async (userId) => {
+const getUserMatches = async (req) => {
   try {
+    const userId = req.params.userId; // Ahora tomamos userId del req
+
+    // Obtener todos los matches donde el usuario participa
     const matches = await Match.findAll({
       where: {
-        [Op.or]: [{ id_user1: userId }, { id_user2: userId }],
+        [Op.or]: [{ id_user1: userId }, { id_user2: userId }]
       },
-      attributes: ["id", "id_user1", "id_user2", "match_state"],
       include: [
-        {
-          model: Book,
-          as: "book1",
-          attributes: ["id", "title", "author", "genre", "book_state", "type", "user_id"],
-          include: [{ model: User, attributes: ["id", "name"] }],
-        },
-        {
-          model: Book,
-          as: "book2",
-          attributes: ["id", "title", "author", "genre", "book_state", "type", "user_id"],
-          include: [{ model: User, attributes: ["id", "name"] }],
-        },
-      ],
+        { model: Book, as: "book1", include: [{ model: User }] },
+        { model: Book, as: "book2", include: [{ model: User }] }
+      ]
     });
 
-    console.log("📄 Matches encontrados:", JSON.stringify(matches, null, 2));
-    return matches;
+    // Formatear la respuesta para que cada match muestre la oferta y la solicitud de ambos usuarios
+    return matches.map(match => {
+      const isUser1 = match.id_user1 == userId;
+
+      return {
+        id: match.id,
+        myOffer: isUser1 ? match.book1 : match.book2, // Mi libro ofertado
+        myRequest: isUser1 ? match.book2 : match.book1, // Mi libro solicitado
+        otherOffer: isUser1 ? match.book2 : match.book1, // Oferta del otro usuario
+        otherRequest: isUser1 ? match.book1 : match.book2, // Solicitud del otro usuario
+        match_state: match.match_state
+      };
+    });
+
   } catch (error) {
-    console.error("❌ Error al obtener los matches:", error);
-    throw error;
+    console.error("Error obteniendo matches:", error);
+    throw new Error("Error al obtener matches");
   }
 };
+
 
 /**
  * Actualizar el estado de un match (aceptado/rechazado)
