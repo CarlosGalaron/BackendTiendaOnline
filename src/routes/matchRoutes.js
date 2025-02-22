@@ -2,13 +2,11 @@ const express = require("express");
 const router = express.Router();
 const matchController = require("../controllers/matchController");
 
-// Obtener los matches del usuario (ajustamos la ruta a `/user/:userId`)
-router.get("/:userId", matchController.getUserMatches);
+// Obtener los matches completos del usuario logueado
+router.get('/complete-matches', matchController.getCompleteMatches);
 
-// Cambiar el estado de un match
-router.put("/:matchId", matchController.updateMatchState);
-
-// Eliminar un match
-router.delete("/:matchId", matchController.deleteMatch);
+// Otras rutas de matches (actualizar estado, eliminar, etc.)
+router.put('/:matchId/state', matchController.updateMatchState);
+router.delete('/:matchId', matchController.deleteMatch);
 
 module.exports = router;

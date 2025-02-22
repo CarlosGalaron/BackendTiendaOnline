@@ -109,43 +109,144 @@ async function checkAndCreateMatch(newBook) {
 }
 
 /**
- * Obtener los matches de un usuario de forma recipr
+ * Encontrar matches completos con información detallada de libros y usuarios
  */
-const getUserMatches = async (req) => {
+async function findCompleteMatches(userId) {
   try {
-    const userId = req.params.userId; // Ahora tomamos userId del req
+    console.log("Buscando matches para el usuario:", userId); // Depuración
 
-    // Obtener todos los matches donde el usuario participa
+    // 1. Obtener todos los matches del usuario logueado (como user1 o user2)
     const matches = await Match.findAll({
       where: {
-        [Op.or]: [{ id_user1: userId }, { id_user2: userId }]
+        [Op.or]: [
+          { id_user1: userId },
+          { id_user2: userId },
+        ],
       },
       include: [
-        { model: Book, as: "book1", include: [{ model: User }] },
-        { model: Book, as: "book2", include: [{ model: User }] }
-      ]
+        {
+          model: Book,
+          as: 'book1',
+          include: [{ model: User, attributes: ['id', 'name'] }],
+        },
+        {
+          model: Book,
+          as: 'book2',
+          include: [{ model: User, attributes: ['id', 'name'] }],
+        },
+        {
+          model: User,
+          as: 'user1',
+          attributes: ['id', 'name'],
+        },
+        {
+          model: User,
+          as: 'user2',
+          attributes: ['id', 'name'],
+        },
+      ],
     });
 
-    // Formatear la respuesta para que cada match muestre la oferta y la solicitud de ambos usuarios
-    return matches.map(match => {
-      const isUser1 = match.id_user1 == userId;
+    console.log("Matches encontrados en la base de datos:", matches); // Depuración
 
-      return {
-        id: match.id,
-        myOffer: isUser1 ? match.book1 : match.book2, // Mi libro ofertado
-        myRequest: isUser1 ? match.book2 : match.book1, // Mi libro solicitado
-        otherOffer: isUser1 ? match.book2 : match.book1, // Oferta del otro usuario
-        otherRequest: isUser1 ? match.book1 : match.book2, // Solicitud del otro usuario
-        match_state: match.match_state
-      };
+    // 2. Extraer los IDs de los libros involucrados en los matches
+    const bookIds = matches.flatMap((match) => [match.book1_id, match.book2_id]);
+
+    // 3. Obtener los datos completos de los libros
+    const books = await Book.findAll({
+      where: {
+        id: bookIds,
+      },
+      include: [{ model: User, attributes: ['id', 'name'] }],
     });
 
+    console.log("Libros encontrados:", books); // Depuración
+
+    // 4. Identificar ofertas y solicitudes de cada usuario
+    const userBooks = {};
+
+    books.forEach((book) => {
+      const userKey = `user_${book.user_id}`;
+      if (!userBooks[userKey]) {
+        userBooks[userKey] = { ofertas: [], solicitudes: [] };
+      }
+
+      if (book.type === 'oferta') {
+        userBooks[userKey].ofertas.push(book);
+      } else if (book.type === 'solicitud') {
+        userBooks[userKey].solicitudes.push(book);
+      }
+    });
+
+    console.log("Libros por usuario:", userBooks); // Depuración
+
+    // 5. Buscar coincidencias bidireccionales
+    const completeMatches = [];
+
+    const userKeyLogeado = `user_${userId}`;
+    const librosLogeado = userBooks[userKeyLogeado];
+
+    Object.keys(userBooks).forEach((userKey) => {
+      if (userKey !== userKeyLogeado) {
+        const librosOtroUsuario = userBooks[userKey];
+
+        // Buscar coincidencias entre ofertas y solicitudes
+        librosLogeado.ofertas.forEach((ofertaLogeado) => {
+          librosOtroUsuario.solicitudes.forEach((solicitudOtroUsuario) => {
+            if (
+              ofertaLogeado.title === solicitudOtroUsuario.title &&
+              ofertaLogeado.type === 'oferta' &&
+              solicitudOtroUsuario.type === 'solicitud'
+            ) {
+              // Buscar la solicitud del usuario logueado que coincide con la oferta del otro usuario
+              librosLogeado.solicitudes.forEach((solicitudLogeado) => {
+                librosOtroUsuario.ofertas.forEach((ofertaOtroUsuario) => {
+                  if (
+                    solicitudLogeado.title === ofertaOtroUsuario.title &&
+                    solicitudLogeado.type === 'solicitud' &&
+                    ofertaOtroUsuario.type === 'oferta'
+                  ) {
+                    // Identificar el nombre del usuario que no es el logueado
+                    const matchEncontradoPor = matches.find((match) => 
+                      (match.id_user1 === userId && match.id_user2 === ofertaOtroUsuario.user_id) ||
+                      (match.id_user2 === userId && match.id_user1 === ofertaOtroUsuario.user_id)
+                    )?.user2?.name || 'Usuario desconocido';
+
+                    // Formatear el match completo
+                    completeMatches.push({
+                      match_encontrado_por: matchEncontradoPor,
+                      mi_oferta: {
+                        title: ofertaLogeado.title,
+                        author: ofertaLogeado.author,
+                        type: ofertaLogeado.type,
+                        state: ofertaLogeado.book_state,
+                        registrado_por: ofertaLogeado.user_id,
+                      },
+                      su_oferta: {
+                        title: ofertaOtroUsuario.title,
+                        author: ofertaOtroUsuario.author,
+                        type: ofertaOtroUsuario.type,
+                        state: ofertaOtroUsuario.book_state,
+                        registrado_por: ofertaOtroUsuario.user_id,
+                      },
+                    });
+                  }
+                });
+              });
+            }
+          });
+        });
+      }
+    });
+
+    console.log("Matches completos encontrados:", completeMatches); // Depuración
+
+    return completeMatches;
   } catch (error) {
-    console.error("Error obteniendo matches:", error);
-    throw new Error("Error al obtener matches");
+    console.error("Error en findCompleteMatches:", error); // Depuración
+    throw new Error(`Error finding complete matches: ${error.message}`);
   }
-};
-
+}
 
 /**
  * Actualizar el estado de un match (aceptado/rechazado)
@@ -185,7 +286,7 @@ module.exports = {
   createCatalogBook,
   createExchangeBook,
   checkAndCreateMatch,
-  getUserMatches,
+  findCompleteMatches,
   updateMatchState,
   deleteMatch,
 };
