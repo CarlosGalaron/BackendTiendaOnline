@@ -1,22 +1,39 @@
 const express = require("express");
 const cors = require("cors");
+const http = require("http");
+const { Server } = require("socket.io");
 const sequelize = require("./src/config/db");
+const chatHandler = require("./src/chatServer");
 
-const app = require('./src/app');
+// Importar Express desde app.js
+const app = require("./src/app");
+
+// Importar asociaciones antes de sincronizar la DB
+require("./src/models/associations");
 
 app.use(cors());
 app.use(express.json());
+app.use("/images", express.static("public/images"));
 
-// Servir imágenes desde la carpeta public/images
-app.use("/images", express.static("/public/images"));
+// Crear servidor HTTP y WebSockets
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: { origin: "*", methods: ["GET", "POST"] },
+});
 
-const PORT = process.env.PORT || 4000;
 
-sequelize
-  .sync({ alter: true })
+// Iniciar WebSockets
+chatHandler(io);
+
+
+// Iniciar conexión a la base de datos
+sequelize.sync()
   .then(() => {
-    app.listen(PORT, () => {
-      console.log(`Server is running on port ${PORT}`);
+    const PORT = process.env.PORT || 4000;
+    server.listen(PORT, () => {
+      console.log(`✅ Servidor corriendo en http://localhost:${PORT}`);
     });
   })
-  .catch((err) => console.error("Failed to start server:", err));
+  .catch((err) => console.error("❌ Error al iniciar la DB:", err));
+
+

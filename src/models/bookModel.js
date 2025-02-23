@@ -1,8 +1,6 @@
-
-//bookModel.js
 const { DataTypes } = require("sequelize");
 const sequelize = require("../config/db");
-const User = require("./userModel");
+const User = require("./userModel"); // Importar User, pero NO Match
 
 const Book = sequelize.define(
   "Book",
@@ -29,11 +27,11 @@ const Book = sequelize.define(
       allowNull: true,
     },
     book_state: {
-      type: DataTypes.STRING, // Solo para intercambio
+      type: DataTypes.STRING,
       allowNull: true,
     },
     ISBN: {
-      type: DataTypes.STRING, // Solo para intercambio
+      type: DataTypes.STRING,
       allowNull: true,
     },
     type: {
@@ -42,7 +40,7 @@ const Book = sequelize.define(
     },
     user_id: {
       type: DataTypes.INTEGER,
-      allowNull: true, // Solo necesario en intercambio
+      allowNull: true,
       references: {
         model: User,
         key: "id",
@@ -51,12 +49,8 @@ const Book = sequelize.define(
   },
   {
     tableName: "books",
-    timestamps: true,
+    timestamps: false,
   }
 );
 
-// Relación solo si es intercambio
-Book.belongsTo(User, { foreignKey: "user_id", onDelete: "CASCADE" });
-User.hasMany(Book, { foreignKey: "user_id" });
-
-module.exports = Book;
+module.exports = Book; // Exportar sin definir relaciones aún

@@ -1,4 +1,6 @@
+//bookController.js
 const bookService = require("../services/bookService");
+
 
 /**
  * Obtener todos los libros de tipo "catalogo"
@@ -8,10 +10,10 @@ const getCatalogBooks = async (req, res) => {
     const books = await bookService.getAllCatalogBooks();
     res.json(books);
   } catch (error) {
-  
+
     res.status(500).json({ error: "Error al obtener los libros del catálogo." });
   }
-  
+
 };
 
 /**
@@ -59,22 +61,36 @@ const createCatalogBook = async (req, res) => {
  */
 const createExchangeBook = async (req, res) => {
   try {
-    const { user_id, type, title, author, book_state } = req.body;
+    const { user_id, title, author, book_state, type } = req.body;
 
-    const newBook = await bookService.createExchangeBook({
+    if (!user_id || !title || !author || !book_state || !type) {
+      return res.status(400).json({ error: "Todos los campos son obligatorios" });
+    }
+
+    console.log("📌 Recibida nueva solicitud de intercambio:", req.body);
+
+    // Registrar el libro y verificar si hay match
+    const { book, match } = await bookService.createExchangeBook({
       user_id,
-      type,
       title,
       author,
       book_state,
+      type,
     });
-    res.status(201).json(newBook);
+
+    console.log("✅ Libro registrado con éxito:", book);
+
+    if (match) {
+      console.log("🎉 ¡Match creado!", match);
+    } else {
+      console.log("⚠️ No se encontró match en este momento.");
+    }
+
+    res.status(201).json({ message: "Libro registrado", book, match });
+
   } catch (error) {
-    res
-      .status(400)
-      .json({
-        error: error.message || "Error al registrar el libro para intercambio.",
-      });
+    console.error("❌ Error en createExchangeBook:", error.message);
+    res.status(500).json({ error: "Error interno del servidor" });
   }
 };
 
