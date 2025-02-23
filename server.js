@@ -16,6 +16,8 @@ const io = new Server(server, {
   cors: { origin: "*", methods: ["GET", "POST"] },
 });
 
+// Iniciar WebSockets
+chatHandler(io);
 
 // Iniciar conexión a DB relacional
 sequelize.sync().then(() => {
@@ -26,5 +28,4 @@ sequelize.sync().then(() => {
   })
   .catch((err) => console.error("❌ Error al iniciar la DB:", err));
 
-// Iniciar WebSockets
-chatHandler(io);
+
