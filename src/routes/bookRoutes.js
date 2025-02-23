@@ -13,7 +13,7 @@ router.get("/exchange/:userId", bookController.getUserExchangeBooks);
 router.post("/catalog", bookController.createCatalogBook);
 
 // Registrar un libro para intercambio (oferta o solicitud)
-router.post("/register-exchange", bookController.createExchangeBook);
+router.post("/exchange", bookController.createExchangeBook);
 
 // Editar un libro del catálogo
 router.put("/catalog/:id", bookController.editCatalogBook);
