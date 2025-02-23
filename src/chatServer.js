@@ -1,5 +1,5 @@
 const sequelize = require("./config/db"); // Importa sequelize
-const fs = require("fs");  // Importar fs para verificar archivos
+const fs = require("fs"); // Importa fs para verificar archivos
 
 module.exports = (io) => {
   io.on("connection", (socket) => {
@@ -8,16 +8,16 @@ module.exports = (io) => {
     // Función para verificar si el archivo ha caducado
     const verificarArchivoCaducado = (filePath) => {
       if (!fs.existsSync(filePath)) {
-        return true;  // Si el archivo no existe, ha caducado
+        return true; // Si el archivo no existe, se considera caducado
       }
 
-      // Lógica de caducidad (por ejemplo, si el archivo tiene más de 24 horas)
+      // Lógica de caducidad: archivo caduca si tiene más de 24 horas
       const fileStats = fs.statSync(filePath);
-      const now = Date.now();
-      const fileAge = now - fileStats.mtimeMs;
-      const expiryTime = 24 * 60 * 60 * 1000; // 24 horas en milisegundos
+      const ahora = Date.now();
+      const edadArchivo = ahora - fileStats.mtimeMs;
+      const tiempoCaducidad = 24 * 60 * 60 * 1000; // 24 horas en milisegundos
 
-      return fileAge > expiryTime;
+      return edadArchivo > tiempoCaducidad;
     };
 
     socket.on("join_room", ({ room, usuario }) => {
@@ -25,11 +25,14 @@ module.exports = (io) => {
       socket.join(room);
 
       const query = `SELECT mensajes FROM chats WHERE numRoom = ?`;
-      sequelize.query(query, { replacements: [room], type: sequelize.QueryTypes.SELECT })
+      sequelize.query(query, {
+        replacements: [room],
+        type: sequelize.QueryTypes.SELECT
+      })
         .then((results) => {
           let historial = results.length ? JSON.parse(results[0].mensajes) : [];
 
-          // Si la sala no existe en la DB, la creamos
+          // Si la sala no existe en la DB, se crea
           if (!results.length) {
             sequelize.query(
               `INSERT INTO chats (numRoom, mensajes) VALUES (?, ?)`,
@@ -43,13 +46,13 @@ module.exports = (io) => {
               });
           }
 
-          // Al cargar el historial, verificamos si los archivos han caducado
-          historial = historial.map(mensaje => {
+          // Verificar si los archivos del historial han caducado
+          historial = historial.map((mensaje) => {
             if (mensaje.archivo && mensaje.nombreArchivo) {
               const filePath = `./uploads/${mensaje.nombreArchivo}`;
               if (verificarArchivoCaducado(filePath)) {
-                mensaje.texto = "Archivo caducado"; // Reemplazamos el texto si el archivo caducó
-                mensaje.archivo = null;  // No enviamos el archivo
+                mensaje.texto = "Archivo caducado"; // Se reemplaza el texto
+                mensaje.archivo = null; // No se envía el archivo
               }
             }
             return mensaje;
@@ -66,7 +69,10 @@ module.exports = (io) => {
       console.log(`💬 Mensaje en sala ${room} de ${usuario}: ${texto}`);
 
       const query = `SELECT mensajes FROM chats WHERE numRoom = ?`;
-      sequelize.query(query, { replacements: [room], type: sequelize.QueryTypes.SELECT })
+      sequelize.query(query, {
+        replacements: [room],
+        type: sequelize.QueryTypes.SELECT
+      })
         .then((results) => {
           let historial = results.length ? JSON.parse(results[0].mensajes) : [];
           historial.push({ usuario, texto });
@@ -99,14 +105,17 @@ module.exports = (io) => {
       });
 
       const query = `SELECT mensajes FROM chats WHERE numRoom = ?`;
-      sequelize.query(query, { replacements: [room], type: sequelize.QueryTypes.SELECT })
+      sequelize.query(query, {
+        replacements: [room],
+        type: sequelize.QueryTypes.SELECT
+      })
         .then((results) => {
           let historial = results.length ? JSON.parse(results[0].mensajes) : [];
-          
+
           historial.push({
             usuario,
-            texto: "Archivo caducado", // Ajustar este mensaje según convenga
-            archivo: null,  // No se guarda el archivo en la DB
+            texto: "Archivo caducado", // Ajustar según convenga
+            archivo: null, // No se guarda el archivo en la DB
             nombreArchivo,
             tipoArchivo
           });
@@ -134,13 +143,13 @@ module.exports = (io) => {
     socket.on("get_user_chats", async (usuarioId) => {
       try {
         console.log(`🟢 Obteniendo chats para el usuario: ${usuarioId}`);
-        
+
         const query = `SELECT numRoom, mensajes FROM chats WHERE user1_id = ? OR user2_id = ?`;
         const chats = await sequelize.query(query, {
           replacements: [usuarioId, usuarioId],
           type: sequelize.QueryTypes.SELECT
         });
-    
+
         socket.emit("user_chats", chats);
       } catch (error) {
         console.error("❌ Error al obtener los chats del usuario:", error);
