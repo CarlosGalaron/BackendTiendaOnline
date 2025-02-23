@@ -5,19 +5,18 @@ const cors = require("cors");
 const userRoutes = require("./routes/userRoutes");
 const bookRoutes = require("./routes/bookRoutes");
 
-const app = express(); // ✅ Se inicializa antes de usarlo
-
+const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.use("/api/users", userRoutes); // Rutas de usuarios
-app.use("/api/books", bookRoutes); // Rutas de libros
-
+app.use("/api/users", userRoutes);
+app.use("/api/books", bookRoutes);
 
 const paymentRoutes = require("./routes/paymentRoutes");
 app.use("/api", paymentRoutes);
 
+const offersRoutes = require("./routes/offersRoutes");
+app.use("/api/offers", offersRoutes);
 
 
 module.exports = app;
-
