@@ -6,6 +6,7 @@ const userRoutes = require("./routes/userRoutes");
 const bookRoutes = require("./routes/bookRoutes");
 const matchRoutes = require("./routes/matchRoutes");
 const offersRoutes = require("./routes/offersRoutes");
+const solicitudRoutes = require("./routes/solicitudRoutes");
 
 
 
@@ -24,6 +25,7 @@ const paymentRoutes = require("./routes/paymentRoutes");
 app.use("/api", paymentRoutes);
 
 app.use("/api/books/offers", offersRoutes);
+app.use("/api/books/solicitudes", solicitudRoutes);
 
 
 

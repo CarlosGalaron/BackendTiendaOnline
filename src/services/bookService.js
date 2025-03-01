@@ -241,6 +241,52 @@ async function updateOffer(id, data) {
   return await offer.update(data);
 }
 
+async function deleteOffer(id) {
+  const offer = await Book.findOne({
+    where: { id, type: "oferta" }
+  });
+  if (!offer) {
+    throw new Error("Oferta no encontrada");
+  }
+  await offer.destroy();
+  return { message: "Oferta eliminada correctamente" };
+}
+
+async function updateOffer(id, data) {
+  const offer = await Book.findOne({
+    where: { id, type: "oferta" }
+  });
+  if (!offer) {
+    throw new Error("Oferta no encontrada");
+  }
+  return await offer.update(data);
+}
+
+// src/services/bookService.js (o en el archivo que corresponda)
+async function deleteRequest(id) {
+  const request = await Book.findOne({
+    where: { id, type: "solicitud" }
+  });
+  if (!request) {
+    throw new Error("Solicitud no encontrada");
+  }
+  await request.destroy();
+  return { message: "Solicitud eliminada correctamente" };
+}
+
+async function updateRequest(id, data) {
+  const request = await Book.findOne({
+    where: { id, type: "solicitud" }
+  });
+  if (!request) {
+    throw new Error("Solicitud no encontrada");
+  }
+  return await request.update(data);
+}
+
+module.exports = { deleteRequest, updateRequest };
+
+
 
 module.exports = {
   getAllCatalogBooks,
@@ -253,4 +299,6 @@ module.exports = {
   deleteMatch,
   updateOffer,
   deleteOffer,
+  deleteRequest,
+  updateRequest,
 };

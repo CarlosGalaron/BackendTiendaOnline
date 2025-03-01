@@ -220,6 +220,41 @@ const searchBooks = async (req, res) => {
     res.status(500).json({ error: "Error al eliminar la oferta" });
   }
 };
+// Actualizar una solicitud (solo actualiza el título)
+const updateSolicitud = async (req, res) => {
+  try {
+    const solicitud = await Book.findOne({
+      where: { id: req.params.id, type: "solicitud" }
+    });
+    if (!solicitud) {
+      return res.status(404).json({ error: "Solicitud no encontrada" });
+    }
+    // Actualiza solo el título
+    const updatedSolicitud = await solicitud.update({ title: req.body.title });
+    res.json(updatedSolicitud);
+  } catch (error) {
+    console.error("Error en updateSolicitud:", error);
+    res.status(500).json({ error: "Error al actualizar la solicitud" });
+  }
+};
+
+// Eliminar una solicitud
+const deleteSolicitud = async (req, res) => {
+  try {
+    const solicitud = await Book.findOne({
+      where: { id: req.params.id, type: "solicitud" }
+    });
+    if (!solicitud) {
+      return res.status(404).json({ error: "Solicitud no encontrada" });
+    }
+    await solicitud.destroy();
+    res.json({ message: "Solicitud eliminada correctamente" });
+  } catch (error) {
+    console.error("Error en deleteSolicitud:", error);
+    res.status(500).json({ error: "Error al eliminar la solicitud" });
+  }
+};
+
 
 
 module.exports = {
@@ -233,4 +268,6 @@ module.exports = {
   searchBooks,
   updateOffer,
   deleteOffer,
+  updateSolicitud,
+  deleteSolicitud
 };
