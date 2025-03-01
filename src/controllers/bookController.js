@@ -1,5 +1,7 @@
 //bookController.js
 const bookService = require("../services/bookService");
+const Book = require("../models/bookModel");
+
 
 
 /**
@@ -184,6 +186,42 @@ const searchBooks = async (req, res) => {
   }
 };
 
+
+ const updateOffer = async (req, res) => {
+  try {
+    const offer = await Book.findOne({
+      where: { id: req.params.id, type: "oferta" }
+    });
+    if (!offer) {
+      return res.status(404).json({ error: "Oferta no encontrada" });
+    }
+    // Actualiza solo el título
+    const updatedOffer = await offer.update({ title: req.body.title });
+    res.json(updatedOffer);
+  } catch (error) {
+    console.error("Error en updateOffer:", error);
+    res.status(500).json({ error: "Error al actualizar la oferta" });
+  }
+};
+
+
+ const deleteOffer = async (req, res) => {
+  try {
+    const offer = await Book.findOne({
+      where: { id: req.params.id, type: "oferta" }
+    });
+    if (!offer) {
+      return res.status(404).json({ error: "Oferta no encontrada" });
+    }
+    await offer.destroy();
+    res.json({ message: "Oferta eliminada correctamente" });
+  } catch (error) {
+    console.error("Error en deleteOffer:", error);
+    res.status(500).json({ error: "Error al eliminar la oferta" });
+  }
+};
+
+
 module.exports = {
   getCatalogBooks,
   getUserExchangeBooks,
@@ -193,4 +231,6 @@ module.exports = {
   editExchangeBook,
   deleteBook,
   searchBooks,
+  updateOffer,
+  deleteOffer,
 };

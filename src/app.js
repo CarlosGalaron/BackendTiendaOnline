@@ -5,9 +5,12 @@ const cors = require("cors");
 const userRoutes = require("./routes/userRoutes");
 const bookRoutes = require("./routes/bookRoutes");
 const matchRoutes = require("./routes/matchRoutes");
+const offersRoutes = require("./routes/offersRoutes");
 
-const app = express(); // ✅ Se inicializa antes de usarlo
 
+
+
+const app = express();
 app.use(cors());
 app.use(express.json());
 
@@ -16,11 +19,13 @@ app.use("/api/books", bookRoutes); // Rutas de libros
 
 app.use("/api/matches", matchRoutes); // Rutas de matches
 
+
 const paymentRoutes = require("./routes/paymentRoutes");
 app.use("/api", paymentRoutes);
+
+app.use("/api/books/offers", offersRoutes);
 
 
 
 
 module.exports = app;
-

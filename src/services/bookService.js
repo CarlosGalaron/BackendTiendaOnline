@@ -219,6 +219,29 @@ const deleteMatch = async (matchId, userId) => {
   return true;
 };
 
+
+async function deleteOffer(id) {
+  const offer = await Book.findOne({
+    where: { id, type: "oferta" }
+  });
+  if (!offer) {
+    throw new Error("Oferta no encontrada");
+  }
+  await offer.destroy();
+  return { message: "Oferta eliminada correctamente" };
+}
+
+async function updateOffer(id, data) {
+  const offer = await Book.findOne({
+    where: { id, type: "oferta" }
+  });
+  if (!offer) {
+    throw new Error("Oferta no encontrada");
+  }
+  return await offer.update(data);
+}
+
+
 module.exports = {
   getAllCatalogBooks,
   getExchangeBooksByUser,
@@ -228,4 +251,6 @@ module.exports = {
   findCompleteMatches,
   updateMatchState,
   deleteMatch,
+  updateOffer,
+  deleteOffer,
 };
