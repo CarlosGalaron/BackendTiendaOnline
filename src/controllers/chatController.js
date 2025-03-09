@@ -17,7 +17,7 @@ const joinRoom = async (socket, { room, user1_id, user2_id }) => {
           mensaje.texto = "Archivo caducado";
           mensaje.archivo = null;
         }
-      }
+      } 
       return mensaje;
     });
 
